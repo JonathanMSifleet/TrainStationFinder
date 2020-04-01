@@ -14,17 +14,23 @@ import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
 	Button getStations;
+	TextView stationOutput;
 	WebService webService = new WebService();
 
 	Double deviceLat = 0.0;
@@ -39,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
 		StrictMode.setThreadPolicy(policy);
 
 		getStations = (Button) this.findViewById(R.id.getStations);
+		stationOutput = (TextView) this.findViewById(R.id.stationOutput);
 
 		this.getLocation();
 
@@ -58,6 +65,8 @@ public class MainActivity extends AppCompatActivity {
 					if (isExternalStorageWritable()) {
 						JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
 						writeStationsToFS("stations.json", JSONStations);
+						ArrayList<Station> listOfStations = this.saveJSONToArrayList(JSONStations);
+						this.displayStations(listOfStations);
 					} else {
 						Log.e("Message", "Cannot write to fs");
 					}
@@ -65,6 +74,37 @@ public class MainActivity extends AppCompatActivity {
 				break;
 		}
 
+	}
+
+	public void displayStations(ArrayList<Station> stations) {
+		stationOutput.setText("");
+		for (Station curStation : stations) {
+			stationOutput.append("Name: " + curStation.getStationName() + "\n");
+			stationOutput.append("Lat: " + curStation.getLat() + "\n");
+			stationOutput.append("Long: " + curStation.getLng() + "\n");
+		}
+	}
+
+	public ArrayList<Station> saveJSONToArrayList(JSONArray stations) {
+		ArrayList<Station> listOfStations = new ArrayList<>();
+		try {
+			for (int i = 0; i < stations.length(); i++) {
+				Station tempStation = new Station();
+
+				JSONObject jo = stations.getJSONObject(i);
+
+				tempStation.setStationName(jo.getString("StationName"));
+				tempStation.setLat(jo.getDouble("Latitude"));
+				tempStation.setLng(jo.getDouble("Longitude"));
+
+				listOfStations.add(tempStation);
+			}
+		} catch (JSONException e) {
+			Log.e("Error", "Something has gone wrong");
+			e.printStackTrace();
+		}
+
+		return listOfStations;
 	}
 
 	public void getLocation() {
