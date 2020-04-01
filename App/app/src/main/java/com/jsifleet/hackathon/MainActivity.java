@@ -29,7 +29,6 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
-import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,7 +53,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	Double deviceLng = 0.0;
 
 	ArrayList<Station> listOfStations = new ArrayList<>();
-	ArrayList<MarkerOptions> listOfMarkers = new ArrayList<>();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -84,26 +82,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 			case R.id.getStations:
 				listOfStations.clear();
 				this.deleteAnnotations();
+				this.searchStations();
 
-				String[] FSPermissions = {
-						Manifest.permission.INTERNET
-				};
-
-				if (checkGotPermission(FSPermissions)) {
-					new task().execute(webService.buildURL(deviceLat, deviceLng));
-
-					for (Station curStation : listOfStations) {
-						Log.e("Message", curStation.getStationName());
-					}
-				} else {
-					Log.e("Message", "Do not have permissions");
-				}
 				break;
 		}
 	}
 
+	public void searchStations() {
+		String[] FSPermissions = {
+				Manifest.permission.INTERNET
+		};
+
+		if (checkGotPermission(FSPermissions)) {
+			new task().execute(webService.buildURL(deviceLat, deviceLng));
+		} else {
+			Log.e("Message", "Do not have permissions");
+		}
+	}
+
 	public void drawMap() {
-		this.addMarker(deviceLat, deviceLng, 2.0f, "Your location");
+		this.addMapMarker(deviceLat, deviceLng, "Your location");
 		this.displayStationsMapBox(listOfStations);
 		this.resetCameraLocation(map);
 	}
@@ -133,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 	public void displayStationsMapBox(ArrayList<Station> stations) {
 		for (Station curStation : stations) {
-			this.addMarker(curStation.getLat(), curStation.getLng(), 3.0f, curStation.getStationName());
+			this.addMapMarker(curStation.getLat(), curStation.getLng(), curStation.getStationName());
 		}
 	}
 
@@ -252,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		// symbol manager is responsible for adding map markers:
 		sm = new SymbolManager(mapView, map, style);
 
-		addMarker(deviceLat, deviceLng, 3.0f, "Your location");
+		addMapMarker(deviceLat, deviceLng, "Your location");
 	}
 
 	public void resetCameraLocation(@NonNull MapboxMap mapboxMap) {
@@ -264,13 +262,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		);
 	}
 
-	public void addMarker(double lat, double lng, float size, String name) {
+	public void addMapMarker(double lat, double lng, String name) {
 		// create item:
 		MarkerOptions tempMarker = new MarkerOptions();
 		tempMarker.position(new LatLng(lat, lng));
 		tempMarker.title(name);
 
-		listOfMarkers.add(tempMarker);
 		map.addMarker(tempMarker);
 	}
 
@@ -323,11 +320,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 			return saveJSONToArrayList(JSONStations);
 		}
 
-		protected void onPostExecute(ArrayList<Station> curStations) {
-			listOfStations.addAll(curStations);
+		protected void onPostExecute(ArrayList<Station> curStationList) {
+
+			curStationList = bubbleSortArray(curStationList);
+
+			listOfStations.addAll(curStationList);
+
 			displayStationsText(listOfStations);
 			drawMap();
 		}
 	}
 
+	public ArrayList<Station> bubbleSortArray(ArrayList<Station> curStationList) {
+		ArrayList<Station> tempStations = new ArrayList<>();
+		tempStations.addAll(curStationList);
+
+		boolean hasSwapped = true;
+		while (hasSwapped) {
+			Station temp;
+			hasSwapped = false;
+			for (int i = 0; i < tempStations.size() - 1; i++) {
+				if (tempStations.get(i + 1).getDistance() < tempStations.get(i).getDistance()) {
+					temp = tempStations.get(i);
+					tempStations.set(i, tempStations.get(i + 1));
+					tempStations.set(i + 1, temp);
+					hasSwapped = true;
+				}
+			}
+		}
+
+		return tempStations;
+	}
 }
