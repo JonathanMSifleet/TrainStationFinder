@@ -82,6 +82,10 @@ public class MainActivity extends AppCompatActivity {
 			stationOutput.append("Name: " + curStation.getStationName() + "\n");
 			stationOutput.append("Lat: " + curStation.getLat() + "\n");
 			stationOutput.append("Long: " + curStation.getLng() + "\n");
+			double tempDistance = curStation.getDistance();
+			tempDistance = Math.floor(tempDistance * 100) / 100;
+			stationOutput.append("Distance: " + tempDistance + " miles");
+			stationOutput.append("\n\n");
 		}
 	}
 
@@ -96,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
 				tempStation.setStationName(jo.getString("StationName"));
 				tempStation.setLat(jo.getDouble("Latitude"));
 				tempStation.setLng(jo.getDouble("Longitude"));
+				tempStation.setDistance(calcDistanceHaversine(deviceLat, deviceLng, tempStation.getLat(), tempStation.getLng()));
 
 				listOfStations.add(tempStation);
 			}
@@ -143,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
 				}
 			});
 		}
-
 	}
 
 	public boolean checkGotPermission(String[] requiredPermissions) {
@@ -201,4 +205,27 @@ public class MainActivity extends AppCompatActivity {
 			Log.e("Message", "JSON not written");
 		}
 	}
+
+	public double calcDistanceHaversine(double deviceLat, double deviceLng, double lat2, double lng2) {
+		final double R = 6372.8; // kilometers
+
+		double tempDeviceLat = deviceLat;
+		double tempDeviceLng = deviceLng;
+
+		double dLat = Math.toRadians(lat2 - tempDeviceLat);
+		double dLon = Math.toRadians(lng2 - tempDeviceLng);
+
+		tempDeviceLat = Math.toRadians(tempDeviceLat);
+		lat2 = Math.toRadians(lat2);
+
+		double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(tempDeviceLat) * Math.cos(lat2);
+		double c = 2 * Math.asin(Math.sqrt(a));
+
+		return convertToMiles(R * c);
+	}
+
+	public double convertToMiles(double distance) {
+		return distance * 0.62137;
+	}
+
 }

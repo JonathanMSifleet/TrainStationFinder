@@ -3,8 +3,18 @@ package com.jsifleet.hackathon;
 public class Station {
 
 	String StationName;
-	Double lat;
-	Double lng;
+	double lat;
+	double lng;
+
+	public double getDistance() {
+		return distance;
+	}
+
+	public void setDistance(double distance) {
+		this.distance = distance;
+	}
+
+	double distance;
 
 	public String getStationName() {
 		return StationName;
@@ -29,4 +39,7 @@ public class Station {
 	public void setLng(Double lng) {
 		this.lng = lng;
 	}
+
+
+
 }
