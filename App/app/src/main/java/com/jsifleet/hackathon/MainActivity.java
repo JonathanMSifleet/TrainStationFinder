@@ -89,7 +89,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		switch (v.getId()) {
 			case R.id.getStations:
 				listOfStations.clear();
-				getStations();
+				
+				String[] FSPermissions = {
+						Manifest.permission.INTERNET
+				};
+
+				if (checkGotPermission(FSPermissions)) {
+					JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
+					listOfStations.addAll(this.saveJSONToArrayList(JSONStations));
+				} else {
+					Log.e("Message", "Do not have permissions");
+				}
 				this.displayStationsText(listOfStations);
 				this.drawMap();
 				break;
@@ -104,19 +114,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		this.addSymbol(deviceLat, deviceLng, 2.0f, "Your location");
 		this.displayStationsMapBox(listOfStations);
 		this.resetCameraLocation(map);
-	}
-
-	public void getStations() {
-		String[] FSPermissions = {
-				Manifest.permission.INTERNET
-		};
-
-		if (checkGotPermission(FSPermissions)) {
-			JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
-			listOfStations.addAll(this.saveJSONToArrayList(JSONStations));
-		} else {
-			Log.e("Message", "Do not have permissions");
-		}
 	}
 
 	public void deleteAnnotations() {
