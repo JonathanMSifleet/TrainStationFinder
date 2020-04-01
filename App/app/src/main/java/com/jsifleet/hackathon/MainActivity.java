@@ -41,18 +41,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 	private MapView mapView;
 	private MapboxMap map;
-	SymbolManager sm;
+	private SymbolManager sm;
 
-	Button getStations;
-	ScrollView stationOutput;
-	LinearLayout stationLayout;
-	TextView stationTextView;
-	WebService webService = new WebService();
+	private Button getStations;
+	private ScrollView stationOutput;
+	private LinearLayout stationLayout;
+	private TextView stationTextView;
+	private final WebService webService = new WebService();
 
-	Double deviceLat = 0.0;
-	Double deviceLng = 0.0;
+	private Double deviceLat = 0.0;
+	private Double deviceLng = 0.0;
 
-	ArrayList<Station> listOfStations = new ArrayList<>();
+	private final ArrayList<Station> listOfStations = new ArrayList<>();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -65,11 +65,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		Mapbox.getInstance(this, mapboxToken);
 		setContentView(R.layout.activity_main);
 
-		getStations = (Button) this.findViewById(R.id.getStations);
+		getStations = this.findViewById(R.id.getStations);
 
-		stationOutput = (ScrollView) this.findViewById(R.id.stationOutput);
-		stationLayout = (LinearLayout) this.findViewById(R.id.stationLayout);
-		stationTextView = (TextView) this.findViewById(R.id.stationTextView);
+		stationOutput = this.findViewById(R.id.stationOutput);
+		stationLayout = this.findViewById(R.id.stationLayout);
+		stationTextView = this.findViewById(R.id.stationTextView);
 
 		mapView = findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
@@ -78,35 +78,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 	public void onClick(View v) {
 
-		switch (v.getId()) {
-			case R.id.getStations:
-				listOfStations.clear();
-				this.deleteAnnotations();
-				this.searchStations();
-
-				break;
+		if (v.getId() == R.id.getStations) {
+			listOfStations.clear();
+			this.deleteAnnotations();
+			this.searchStations();
 		}
 	}
 
-	public void searchStations() {
+	private void searchStations() {
 		String[] FSPermissions = {
 				Manifest.permission.INTERNET
 		};
 
 		if (checkGotPermission(FSPermissions)) {
-			new task().execute(webService.buildURL(deviceLat, deviceLng));
+			new task().execute(WebService.buildURL(deviceLat, deviceLng));
 		} else {
 			Log.e("Message", "Do not have permissions");
 		}
 	}
 
-	public void drawMap() {
+	private void drawMap() {
 		this.addMapMarker(deviceLat, deviceLng, "Your location");
 		this.displayStationsMapBox(listOfStations);
 		this.resetCameraLocation(map);
 	}
 
-	public void deleteAnnotations() {
+	private void deleteAnnotations() {
 
 		LongSparseArray<Symbol> annotations = sm.getAnnotations();
 		ArrayList<Symbol> tempAnnotations = new ArrayList<>();
@@ -118,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		sm.delete(tempAnnotations);
 	}
 
-	public void displayStationsText(ArrayList<Station> stations) {
+	private void displayStationsText(ArrayList<Station> stations) {
 		stationTextView.setText("");
 		for (Station curStation : stations) {
 			stationTextView.append("Name: " + curStation.getStationName() + "\n");
@@ -129,13 +126,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 	}
 
-	public void displayStationsMapBox(ArrayList<Station> stations) {
+	private void displayStationsMapBox(ArrayList<Station> stations) {
 		for (Station curStation : stations) {
 			this.addMapMarker(curStation.getLat(), curStation.getLng(), curStation.getStationName());
 		}
 	}
 
-	public ArrayList<Station> saveJSONToArrayList(JSONArray stations) {
+	private ArrayList<Station> saveJSONToArrayList(JSONArray stations) {
 		ArrayList<Station> tempListOfStations = new ArrayList<>();
 		try {
 			for (int i = 0; i < stations.length(); i++) {
@@ -158,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		return tempListOfStations;
 	}
 
-	public void getLocation() {
+	private void getLocation() {
 
 		String[] locationPermissions = {
 				Manifest.permission.INTERNET,
@@ -196,11 +193,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 	}
 
-	public boolean checkGotPermission(String[] requiredPermissions) {
+	private boolean checkGotPermission(String[] requiredPermissions) {
 
 		boolean ok = true;
-		for (int i = 0; i < requiredPermissions.length; i++) {
-			int result = ActivityCompat.checkSelfPermission(this, requiredPermissions[i]);
+		for (String requiredPermission : requiredPermissions) {
+			int result = ActivityCompat.checkSelfPermission(this, requiredPermission);
 			if (result != PackageManager.PERMISSION_GRANTED) {
 				ok = false;
 			}
@@ -215,14 +212,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		return false;
 	}
 
-	public double calcDistanceHaversine(double deviceLat, double deviceLng, double lat2, double lng2) {
+	private double calcDistanceHaversine(double deviceLat, double deviceLng, double lat2, double lng2) {
 		final double R = 6372.8; // kilometers
 
 		double tempDeviceLat = deviceLat;
-		double tempDeviceLng = deviceLng;
 
 		double dLat = Math.toRadians(lat2 - tempDeviceLat);
-		double dLon = Math.toRadians(lng2 - tempDeviceLng);
+		double dLon = Math.toRadians(lng2 - deviceLng);
 
 		tempDeviceLat = Math.toRadians(tempDeviceLat);
 		lat2 = Math.toRadians(lat2);
@@ -233,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		return convertToMiles(R * c);
 	}
 
-	public double convertToMiles(double distance) {
+	private double convertToMiles(double distance) {
 		return distance * 0.62137;
 	}
 
@@ -253,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		addMapMarker(deviceLat, deviceLng, "Your location");
 	}
 
-	public void resetCameraLocation(@NonNull MapboxMap mapboxMap) {
+	private void resetCameraLocation(@NonNull MapboxMap mapboxMap) {
 		mapboxMap.setCameraPosition(
 				new CameraPosition.Builder()
 						.target(new LatLng(deviceLat, deviceLng))
@@ -262,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		);
 	}
 
-	public void addMapMarker(double lat, double lng, String name) {
+	private void addMapMarker(double lat, double lng, String name) {
 		// create item:
 		MarkerOptions tempMarker = new MarkerOptions();
 		tempMarker.position(new LatLng(lat, lng));
@@ -331,9 +327,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 	}
 
-	public ArrayList<Station> bubbleSortArray(ArrayList<Station> curStationList) {
-		ArrayList<Station> tempStations = new ArrayList<>();
-		tempStations.addAll(curStationList);
+	private ArrayList<Station> bubbleSortArray(ArrayList<Station> curStationList) {
+		ArrayList<Station> tempStations = new ArrayList<>(curStationList);
 
 		boolean hasSwapped = true;
 		while (hasSwapped) {
