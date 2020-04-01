@@ -19,9 +19,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.collection.LongSparseArray;
 import androidx.core.app.ActivityCompat;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
@@ -57,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	Double deviceLng = 0.0;
 
 	ArrayList<Station> listOfStations = new ArrayList<>();
-	ArrayList<Symbol> listOfSymbols = new ArrayList<>();
+	ArrayList<MarkerOptions> listOfMarkers = new ArrayList<>();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	}
 
 	public void drawMap() {
-		this.addSymbol(deviceLat, deviceLng, 2.0f, "Your location");
+		this.addMarker(deviceLat, deviceLng, 2.0f, "Your location");
 		this.displayStationsMapBox(listOfStations);
 		this.resetCameraLocation(map);
 	}
@@ -121,8 +118,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 
 		sm.delete(tempAnnotations);
-		map.clear();
-		listOfSymbols.clear();
 	}
 
 	public void displayStationsText(ArrayList<Station> stations) {
@@ -138,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 	public void displayStationsMapBox(ArrayList<Station> stations) {
 		for (Station curStation : stations) {
-			this.addSymbol(curStation.getLat(), curStation.getLng(), 3.0f, curStation.getStationName());
+			this.addMarker(curStation.getLat(), curStation.getLng(), 3.0f, curStation.getStationName());
 		}
 	}
 
@@ -257,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		// symbol manager is responsible for adding map markers:
 		sm = new SymbolManager(mapView, map, style);
 
-		addSymbol(deviceLat, deviceLng, 3.0f, "Your location");
+		addMarker(deviceLat, deviceLng, 3.0f, "Your location");
 	}
 
 	public void resetCameraLocation(@NonNull MapboxMap mapboxMap) {
@@ -269,33 +264,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		);
 	}
 
-	public void addSymbol(double lat, double lng, float size, String name) {
+	public void addMarker(double lat, double lng, float size, String name) {
 		// create item:
+		MarkerOptions tempMarker = new MarkerOptions();
+		tempMarker.position(new LatLng(lat, lng));
+		tempMarker.title(name);
 
-		String json = "{'name': '" + name + "'}";
-		JsonElement jsonElement = new JsonParser().parse(json);
-
-		Symbol tempSymbol = sm.create(new SymbolOptions()
-				.withLatLng(new LatLng(lat, lng))
-				.withIconImage("marker-11")
-				.withIconColor("Black")
-				.withIconSize(size)
-				.withData(jsonElement)
-		);
-
-		sm.addClickListener(symbol -> {
-			JsonElement JSON = tempSymbol.getData();
-			JsonObject temp = JSON.getAsJsonObject();
-
-			String stationName = temp.get("name").getAsString();
-
-			Log.e("Click", stationName);
-
-			map.addMarker(new MarkerOptions()
-					.position(new LatLng(lat, lng))
-					.title(stationName)
-			);
-		});
+		listOfMarkers.add(tempMarker);
+		map.addMarker(tempMarker);
 	}
 
 	@Override
