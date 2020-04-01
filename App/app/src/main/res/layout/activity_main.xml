@@ -21,7 +21,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
+    <ScrollView
         android:id="@+id/stationOutput"
         android:layout_width="342dp"
         android:layout_height="415dp"
@@ -32,5 +32,11 @@
         app:layout_constraintBottom_toTopOf="@+id/getStations"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" >
+
+        <TextView
+            android:id="@+id/stationTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

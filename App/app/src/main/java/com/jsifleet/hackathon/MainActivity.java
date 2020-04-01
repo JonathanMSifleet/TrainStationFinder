@@ -14,6 +14,7 @@ import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -30,7 +31,8 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
 	Button getStations;
-	TextView stationOutput;
+	ScrollView stationOutput;
+	TextView stationTextView;
 	WebService webService = new WebService();
 
 	Double deviceLat = 0.0;
@@ -45,7 +47,8 @@ public class MainActivity extends AppCompatActivity {
 		StrictMode.setThreadPolicy(policy);
 
 		getStations = (Button) this.findViewById(R.id.getStations);
-		stationOutput = (TextView) this.findViewById(R.id.stationOutput);
+		stationOutput = (ScrollView) this.findViewById(R.id.stationOutput);
+		stationTextView = (TextView) this.findViewById(R.id.stationTextView);
 
 		this.getLocation();
 
@@ -55,37 +58,41 @@ public class MainActivity extends AppCompatActivity {
 
 		switch (v.getId()) {
 			case R.id.getStations:
-				String[] FSPermissions = {
-						Manifest.permission.READ_EXTERNAL_STORAGE,
-						Manifest.permission.WRITE_EXTERNAL_STORAGE,
-						Manifest.permission.INTERNET
-				};
-
-				if (checkGotPermission(FSPermissions)) {
-					if (isExternalStorageWritable()) {
-						JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
-						writeStationsToFS("stations.json", JSONStations);
-						ArrayList<Station> listOfStations = this.saveJSONToArrayList(JSONStations);
-						this.displayStations(listOfStations);
-					} else {
-						Log.e("Message", "Cannot write to fs");
-					}
-				}
+				handleGetStations();
 				break;
 		}
 
 	}
 
+	public void handleGetStations() {
+		String[] FSPermissions = {
+				Manifest.permission.READ_EXTERNAL_STORAGE,
+				Manifest.permission.WRITE_EXTERNAL_STORAGE,
+				Manifest.permission.INTERNET
+		};
+
+		if (checkGotPermission(FSPermissions)) {
+			if (isExternalStorageWritable()) {
+				JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
+				writeStationsToFS("stations.json", JSONStations);
+				ArrayList<Station> listOfStations = this.saveJSONToArrayList(JSONStations);
+				this.displayStations(listOfStations);
+			} else {
+				Log.e("Message", "Cannot write to fs");
+			}
+		}
+	}
+
 	public void displayStations(ArrayList<Station> stations) {
-		stationOutput.setText("");
+		stationTextView.setText("");
 		for (Station curStation : stations) {
-			stationOutput.append("Name: " + curStation.getStationName() + "\n");
-			stationOutput.append("Lat: " + curStation.getLat() + "\n");
-			stationOutput.append("Long: " + curStation.getLng() + "\n");
+			stationTextView.append("Name: " + curStation.getStationName() + "\n");
+			//stationTextView.append("Lat: " + curStation.getLat() + "\n");
+			//stationTextView.append("Long: " + curStation.getLng() + "\n");
 			double tempDistance = curStation.getDistance();
 			tempDistance = Math.floor(tempDistance * 100) / 100;
-			stationOutput.append("Distance: " + tempDistance + " miles");
-			stationOutput.append("\n\n");
+			stationTextView.append("Distance: " + tempDistance + " miles");
+			stationTextView.append("\n\n");
 		}
 	}
 
