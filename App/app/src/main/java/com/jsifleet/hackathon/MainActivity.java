@@ -36,7 +36,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, Style.OnStyleLoaded {
 
@@ -45,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	SymbolManager sm;
 
 	Button getStations;
+	Button clearMap;
 	ScrollView stationOutput;
 	LinearLayout stationLayout;
 	TextView stationTextView;
@@ -67,6 +67,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		setContentView(R.layout.activity_main);
 
 		getStations = (Button) this.findViewById(R.id.getStations);
+		clearMap = (Button) this.findViewById(R.id.clearMap);
+
 		stationOutput = (ScrollView) this.findViewById(R.id.stationOutput);
 		stationLayout = (LinearLayout) this.findViewById(R.id.stationLayout);
 		stationTextView = (TextView) this.findViewById(R.id.stationTextView);
@@ -82,14 +84,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 			case R.id.getStations:
 				handleGetStations();
 				break;
+			case R.id.clearMap:
+				this.deleteAnnotations();
+				break;
 		}
 
 	}
 
 	public void handleGetStations() {
 		String[] FSPermissions = {
-				Manifest.permission.READ_EXTERNAL_STORAGE,
-				Manifest.permission.WRITE_EXTERNAL_STORAGE,
 				Manifest.permission.INTERNET
 		};
 
@@ -97,7 +100,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 			JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
 			ArrayList<Station> listOfStations = this.saveJSONToArrayList(JSONStations);
 			this.displayStationsText(listOfStations);
-			this.deleteAnnotations();
 			this.addSymbol(deviceLat, deviceLng);
 			this.displayStationsMapBox(listOfStations);
 		} else {
@@ -121,8 +123,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		stationTextView.setText("");
 		for (Station curStation : stations) {
 			stationTextView.append("Name: " + curStation.getStationName() + "\n");
-			//stationTextView.append("Lat: " + curStation.getLat() + "\n");
-			//stationTextView.append("Long: " + curStation.getLng() + "\n");
 			double tempDistance = curStation.getDistance();
 			tempDistance = Math.floor(tempDistance * 100) / 100;
 			stationTextView.append("Distance: " + tempDistance + " miles");
@@ -243,13 +243,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		map = mapboxMap;
 		//required:
 		mapboxMap.setStyle(Style.OUTDOORS, this);
-
-		mapboxMap.setCameraPosition(
-				new CameraPosition.Builder()
-						.target(new LatLng(deviceLat, deviceLng))
-						.zoom(12.0)
-						.build()
-		);
+		this.resetCameraLocation(mapboxMap);
 	}
 
 	@Override
@@ -259,6 +253,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 		addSymbol(deviceLat, deviceLng);
 
+	}
+
+	public void resetCameraLocation(@NonNull MapboxMap mapboxMap) {
+		mapboxMap.setCameraPosition(
+				new CameraPosition.Builder()
+						.target(new LatLng(deviceLat, deviceLng))
+						.zoom(12.0)
+						.build()
+		);
 	}
 
 	public void addSymbol(double lat, double lng) {
