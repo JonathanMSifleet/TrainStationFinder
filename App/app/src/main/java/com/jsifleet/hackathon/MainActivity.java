@@ -100,8 +100,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 			JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
 			ArrayList<Station> listOfStations = this.saveJSONToArrayList(JSONStations);
 			this.displayStationsText(listOfStations);
-			this.addSymbol(deviceLat, deviceLng);
+			this.addSymbol(deviceLat, deviceLng, "circle-15");
 			this.displayStationsMapBox(listOfStations);
+			this.resetCameraLocation(map);
 		} else {
 			Log.e("Message", "Do not have permissions");
 		}
@@ -132,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 	public void displayStationsMapBox(ArrayList<Station> stations) {
 		for (Station curStation : stations) {
-			this.addSymbol(curStation.getLat(), curStation.getLng());
+			this.addSymbol(curStation.getLat(), curStation.getLng(), "rail-15");
 		}
 	}
 
@@ -251,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		// symbol manager is responsible for adding map markers:
 		sm = new SymbolManager(mapView, map, style);
 
-		addSymbol(deviceLat, deviceLng);
+		addSymbol(deviceLat, deviceLng, "circle-15");
 
 	}
 
@@ -264,16 +265,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		);
 	}
 
-	public void addSymbol(double lat, double lng) {
+	public void addSymbol(double lat, double lng, String icon) {
 		// create an individual map marker:
 		SymbolOptions symbolOptions = new SymbolOptions()
 				.withLatLng(new LatLng(lat, lng))
-				.withIconImage("suitcase-15")
+				.withIconImage("suitcase-11")
 				.withIconColor("black")
 				.withIconSize(1.0f);
 
 		// display item:
 		Symbol symbol = sm.create(symbolOptions);
+		Log.e("Icon", icon);
 	}
 
 	@Override
