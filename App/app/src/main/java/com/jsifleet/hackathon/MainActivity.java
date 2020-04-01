@@ -24,6 +24,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -40,7 +41,6 @@ import org.json.JSONObject;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, Style.OnStyleLoaded {
 
@@ -49,7 +49,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	SymbolManager sm;
 
 	Button getStations;
-	Button clearMap;
 	ScrollView stationOutput;
 	LinearLayout stationLayout;
 	TextView stationTextView;
@@ -75,7 +74,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		setContentView(R.layout.activity_main);
 
 		getStations = (Button) this.findViewById(R.id.getStations);
-		clearMap = (Button) this.findViewById(R.id.clearMap);
 
 		stationOutput = (ScrollView) this.findViewById(R.id.stationOutput);
 		stationLayout = (LinearLayout) this.findViewById(R.id.stationLayout);
@@ -91,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		switch (v.getId()) {
 			case R.id.getStations:
 				listOfStations.clear();
+				this.deleteAnnotations();
 
 				String[] FSPermissions = {
 						Manifest.permission.INTERNET
@@ -106,11 +105,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 					Log.e("Message", "Do not have permissions");
 				}
 				break;
-			case R.id.clearMap:
-				this.deleteAnnotations();
-				break;
 		}
-
 	}
 
 	public void drawMap() {
@@ -129,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 
 		sm.delete(tempAnnotations);
+		map.clear();
 		listOfSymbols.clear();
 	}
 
@@ -291,12 +287,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		);
 
 		sm.addClickListener(symbol -> {
-			JsonElement JSON = symbol.getData();
+			JsonElement JSON = tempSymbol.getData();
 			JsonObject temp = JSON.getAsJsonObject();
 
 			String stationName = temp.get("name").getAsString();
 
 			Log.e("Click", stationName);
+
+			map.addMarker(new MarkerOptions()
+					.position(new LatLng(lat, lng))
+					.title(stationName)
+			);
 		});
 	}
 

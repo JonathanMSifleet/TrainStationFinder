@@ -7,21 +7,6 @@
     tools:context=".MainActivity">
     xmlns:android="http://schemas.android.com/apk/res/android"
 
-    <Button
-        android:id="@+id/clearMap"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="161dp"
-        android:layout_marginTop="27dp"
-        android:layout_marginEnd="162dp"
-        android:layout_marginBottom="28dp"
-        android:onClick="onClick"
-        android:text="Clear"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/getStations" />
-
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="346dp"
@@ -29,9 +14,10 @@
         android:layout_marginStart="35dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="30dp"
-        android:layout_marginBottom="47dp"
+        android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toTopOf="@+id/getStations"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/stationOutput" />
 
@@ -40,6 +26,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="65dp"
+        android:layout_marginTop="53dp"
         android:layout_marginEnd="66dp"
         android:layout_marginBottom="103dp"
         android:onClick="onClick"
@@ -48,7 +35,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/stationOutput" />
+        app:layout_constraintTop_toBottomOf="@+id/mapView" />
 
     <ScrollView
         android:id="@+id/stationOutput"
