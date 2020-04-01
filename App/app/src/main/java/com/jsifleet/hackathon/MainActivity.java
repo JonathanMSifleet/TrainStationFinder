@@ -9,10 +9,23 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+
+import org.json.JSONArray;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
+
+	Button getStations;
+	WebService webService = new WebService();
 
 	Double deviceLat = 0.0;
 	Double deviceLng = 0.0;
@@ -25,7 +38,32 @@ public class MainActivity extends AppCompatActivity {
 		StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 		StrictMode.setThreadPolicy(policy);
 
+		getStations = (Button) this.findViewById(R.id.getStations);
+
 		this.getLocation();
+
+	}
+
+	public void onClick(View v) {
+
+		switch (v.getId()) {
+			case R.id.getStations:
+				String[] FSPermissions = {
+						Manifest.permission.READ_EXTERNAL_STORAGE,
+						Manifest.permission.WRITE_EXTERNAL_STORAGE,
+						Manifest.permission.INTERNET
+				};
+
+				if (checkGotPermission(FSPermissions)) {
+					if (isExternalStorageWritable()) {
+						JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
+						writeStationsToFS("stations.json", JSONStations);
+					} else {
+						Log.e("Message", "Cannot write to fs");
+					}
+				}
+				break;
+		}
 
 	}
 
@@ -85,5 +123,42 @@ public class MainActivity extends AppCompatActivity {
 			return true;
 		}
 		return false;
+	}
+
+	public boolean isExternalStorageWritable() {
+		// checks if external storage is available for read and write
+		String state = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+			return true;
+		}
+		return false;
+	}
+
+	public void writeStationsToFS(String filename, JSONArray jsonArray) {
+
+		File folder = new File(Environment.getExternalStorageDirectory(), "/Hackathon");
+
+		if (!folder.exists()) {
+			folder.mkdirs();
+		}
+
+		File file = new File(Environment.getExternalStorageDirectory(), "Hackathon/" + filename);
+		FileOutputStream fos;
+
+		byte[] data = new String(jsonArray.toString()).getBytes();
+
+		try {
+			fos = new FileOutputStream(file);
+			fos.write(data);
+			fos.flush();
+			fos.close();
+			Log.e("Message", "JSON written");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			Log.e("Message", "JSON not written");
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+			Log.e("Message", "JSON not written");
+		}
 	}
 }
