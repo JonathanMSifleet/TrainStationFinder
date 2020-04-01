@@ -2,10 +2,10 @@ package com.jsifleet.hackathon;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
@@ -14,18 +14,15 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.collection.LongSparseArray;
 import androidx.core.app.ActivityCompat;
 
-import com.mapbox.mapboxsdk.plugins.annotation.Annotation;
-import com.mapbox.mapboxsdk.plugins.annotation.OnSymbolClickListener;
-import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
-import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
-import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -33,7 +30,9 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.utils.ColorUtils;
+import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -91,7 +90,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 			case R.id.getStations:
 				listOfStations.clear();
 				getStations();
-
 				this.displayStationsText(listOfStations);
 				this.drawMap();
 				break;
@@ -103,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	}
 
 	public void drawMap() {
-		this.addSymbol(deviceLat, deviceLng, 2.0f);
+		this.addSymbol(deviceLat, deviceLng, 2.0f, "Your location");
 		this.displayStationsMapBox(listOfStations);
 		this.resetCameraLocation(map);
 	}
@@ -147,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 	public void displayStationsMapBox(ArrayList<Station> stations) {
 		for (Station curStation : stations) {
-			this.addSymbol(curStation.getLat(), curStation.getLng(), 3.0f);
+			this.addSymbol(curStation.getLat(), curStation.getLng(), 3.0f, curStation.getStationName());
 		}
 	}
 
@@ -266,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		// symbol manager is responsible for adding map markers:
 		sm = new SymbolManager(mapView, map, style);
 
-		addSymbol(deviceLat, deviceLng, 3.0f);
+		addSymbol(deviceLat, deviceLng, 3.0f, "Your location");
 	}
 
 	public void resetCameraLocation(@NonNull MapboxMap mapboxMap) {
@@ -278,17 +276,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		);
 	}
 
-	public void addSymbol(double lat, double lng, float size) {
+	public void addSymbol(double lat, double lng, float size, String name) {
 		// create item:
+
+		String json = "{'name': '" + name + "'}";
+		JsonElement jsonElement = new JsonParser().parse(json);
+
 		Symbol tempSymbol = sm.create(new SymbolOptions()
 				.withLatLng(new LatLng(lat, lng))
 				.withIconImage("marker-11")
 				.withIconColor("Black")
 				.withIconSize(size)
+				.withData(jsonElement)
 		);
 
-		sm.addClickListener(tempSymbol1 -> {
-			Log.e("Click", "Click");
+		sm.addClickListener(symbol -> {
+			JsonElement JSON = symbol.getData();
+			JsonObject temp = JSON.getAsJsonObject();
+
+			String stationName = temp.get("name").getAsString();
+
+			Log.e("Click", stationName);
 		});
 	}
 
@@ -333,4 +341,5 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		super.onSaveInstanceState(outState);
 		mapView.onSaveInstanceState(outState);
 	}
+
 }
