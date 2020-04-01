@@ -21,17 +21,19 @@ public class WebService {
 			InputStreamReader isr = new InputStreamReader(tc.getInputStream());
 			BufferedReader in = new BufferedReader(isr);
 
-			String line;
-			StringBuilder json = new StringBuilder();
+			String line = "";
+			String json = "";
 
 			while ((line = in.readLine()) != null) {
-				json.append(line);
+				json = json + line;
 			}
 			in.close();
 
-			return new JSONArray(json.toString());
+			return new JSONArray(json);
 
-		} catch (IOException | JSONException e) {
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		return new JSONArray();
@@ -39,7 +41,8 @@ public class WebService {
 
 	public static URL buildURL(double lat, double lng) {
 		try {
-			return new URL("http://10.0.2.2:8080/stations?lat=" + lat + "&lng=" + lng);
+			URL url = new URL("http://10.0.2.2:8080/stations?lat=" + lat + "&lng=" + lng);
+			return url;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
