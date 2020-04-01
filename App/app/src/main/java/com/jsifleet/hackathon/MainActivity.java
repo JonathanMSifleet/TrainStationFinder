@@ -1,13 +1,11 @@
 package com.jsifleet.hackathon;
 
 import android.Manifest;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
@@ -18,8 +16,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.collection.LongSparseArray;
 import androidx.core.app.ActivityCompat;
 
+import com.mapbox.mapboxsdk.plugins.annotation.Annotation;
 import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
@@ -35,16 +35,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, Style.OnStyleLoaded {
 
 	private MapView mapView;
 	private MapboxMap map;
+	SymbolManager sm;
 
 	Button getStations;
 	ScrollView stationOutput;
@@ -96,18 +94,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		};
 
 		if (checkGotPermission(FSPermissions)) {
-			if (isExternalStorageWritable()) {
-				JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
-				writeStationsToFS("stations.json", JSONStations);
-				ArrayList<Station> listOfStations = this.saveJSONToArrayList(JSONStations);
-				this.displayStations(listOfStations);
-			} else {
-				Log.e("Message", "Cannot write to fs");
-			}
+			JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
+			ArrayList<Station> listOfStations = this.saveJSONToArrayList(JSONStations);
+			this.displayStationsText(listOfStations);
+			this.deleteAnnotations();
+			this.addSymbol(deviceLat, deviceLng);
+			this.displayStationsMapBox(listOfStations);
+		} else {
+			Log.e("Message", "Do not have permissions");
 		}
 	}
 
-	public void displayStations(ArrayList<Station> stations) {
+	public void deleteAnnotations() {
+
+		LongSparseArray<Symbol> annotations = sm.getAnnotations();
+		ArrayList<Symbol> tempAnnotations = new ArrayList<>();
+
+		for (int i = 0; i < annotations.size(); i++) {
+			tempAnnotations.add(annotations.valueAt(i));
+		}
+
+		sm.delete(tempAnnotations);
+	}
+
+	public void displayStationsText(ArrayList<Station> stations) {
 		stationTextView.setText("");
 		for (Station curStation : stations) {
 			stationTextView.append("Name: " + curStation.getStationName() + "\n");
@@ -117,6 +127,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 			tempDistance = Math.floor(tempDistance * 100) / 100;
 			stationTextView.append("Distance: " + tempDistance + " miles");
 			stationTextView.append("\n\n");
+		}
+	}
+
+	public void displayStationsMapBox(ArrayList<Station> stations) {
+		for (Station curStation : stations) {
+			this.addSymbol(curStation.getLat(), curStation.getLng());
 		}
 	}
 
@@ -200,43 +216,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		return false;
 	}
 
-	public boolean isExternalStorageWritable() {
-		// checks if external storage is available for read and write
-		String state = Environment.getExternalStorageState();
-		if (Environment.MEDIA_MOUNTED.equals(state)) {
-			return true;
-		}
-		return false;
-	}
-
-	public void writeStationsToFS(String filename, JSONArray jsonArray) {
-
-		File folder = new File(Environment.getExternalStorageDirectory(), "/Hackathon");
-
-		if (!folder.exists()) {
-			folder.mkdirs();
-		}
-
-		File file = new File(Environment.getExternalStorageDirectory(), "Hackathon/" + filename);
-		FileOutputStream fos;
-
-		byte[] data = new String(jsonArray.toString()).getBytes();
-
-		try {
-			fos = new FileOutputStream(file);
-			fos.write(data);
-			fos.flush();
-			fos.close();
-			Log.e("Message", "JSON written");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			Log.e("Message", "JSON not written");
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-			Log.e("Message", "JSON not written");
-		}
-	}
-
 	public double calcDistanceHaversine(double deviceLat, double deviceLng, double lat2, double lng2) {
 		final double R = 6372.8; // kilometers
 
@@ -268,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		mapboxMap.setCameraPosition(
 				new CameraPosition.Builder()
 						.target(new LatLng(deviceLat, deviceLng))
-						.zoom(8.0)
+						.zoom(12.0)
 						.build()
 		);
 	}
@@ -276,11 +255,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	@Override
 	public void onStyleLoaded(@NonNull Style style) {
 		// symbol manager is responsible for adding map markers:
-		SymbolManager sm = new SymbolManager(mapView, map, style);
+		sm = new SymbolManager(mapView, map, style);
 
+		addSymbol(deviceLat, deviceLng);
+
+	}
+
+	public void addSymbol(double lat, double lng) {
 		// create an individual map marker:
 		SymbolOptions symbolOptions = new SymbolOptions()
-				.withLatLng(new LatLng(deviceLat, deviceLng))
+				.withLatLng(new LatLng(lat, lng))
 				.withIconImage("suitcase-15")
 				.withIconColor("black")
 				.withIconSize(1.0f);
