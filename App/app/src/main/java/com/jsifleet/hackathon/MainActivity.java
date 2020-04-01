@@ -52,6 +52,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 	private final ArrayList<Station> listOfStations = new ArrayList<>();
 
+	/**
+	 * Initialises all required elements and gets device location
+	 *
+	 * @param Device's last saved state (savedInstanceState)
+	 */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -75,6 +80,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		mapView.getMapAsync(this);
 	}
 
+	/**
+	 * Runs when a button is clicked. Only handles the get stations button.
+	 * Clears map and searches for stations
+	 *
+	 * @param Device view (View)
+	 */
 	public void onClick(View v) {
 
 		if (v.getId() == R.id.getStations) {
@@ -87,6 +98,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 	}
 
+	/**
+	 * Runs function that searches for nearby stations
+	 */
 	private void searchStations() {
 		String[] Permissions = {
 				Manifest.permission.INTERNET
@@ -101,6 +115,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 	}
 
+	/**
+	 * Draws all required elements onto map
+	 */
 	private void drawMap() {
 		// add location to map
 		this.addMapMarker(deviceLat, deviceLng, "Your location");
@@ -110,6 +127,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		this.resetCameraLocation(map);
 	}
 
+	/**
+	 * Displays each stations name and distance from an Array List of train stations
+	 *
+	 * @param List of stored train stations (ArrayList<Station>)
+	 */
 	private void displayStationsText(ArrayList<Station> stations) {
 		stationTextView.setText("");
 
@@ -123,6 +145,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 	}
 
+	/**
+	 * Calls the function to display a marker on the map for each train station
+	 *
+	 * @param List of stored train stations (ArrayList<Station>)
+	 */
 	private void displayStationsMapBox(ArrayList<Station> stations) {
 		// add a marker for each station onto map
 		for (Station curStation : stations) {
@@ -130,6 +157,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 	}
 
+	/**
+	 * Converts a JSON Array containing local train stations, into an Array List of train station objects
+	 *
+	 * @param JSON Array of stored train stations (JSONArray stations)
+	 * @return List of stored train stations (ArrayList<Station>)
+	 */
 	private ArrayList<Station> saveJSONToArrayList(JSONArray stations) {
 		ArrayList<Station> tempListOfStations = new ArrayList<>();
 
@@ -156,6 +189,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		return tempListOfStations;
 	}
 
+	/**
+	 * Creates a location listener service which updates the latitude and longitude that correspond to the device's locations
+	 */
 	private void getLocation() {
 
 		String[] locationPermissions = {
@@ -195,6 +231,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 	}
 
+	/**
+	 * Checks if the app has all the required permissions, and requests them if not
+	 *
+	 * @param Array of required permissions (String[])
+	 * @return True or false regarding whether the app has got required permissions (boolean)
+	 */
 	private boolean checkGotPermission(String[] requiredPermissions) {
 
 		// checks for permissions
@@ -216,9 +258,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		return false;
 	}
 
+	/**
+	 * Uses the Haversine formula to determine the distance between the device and the location
+	 *
+	 * @param Device's    latitude (double)
+	 * @param Device's    longitude (double)
+	 * @param Location's  latitude (double)
+	 * @param Locations's longitude (double)
+	 * @return Distance from device to location in miles (double)
+	 */
 	private double calcDistanceHaversine(double deviceLat, double deviceLng, double lat2, double lng2) {
 
-		// calculates distance using Haversine algorithm:
+		// calculates distance using Haversine formula:
 		final double R = 6372.8; // kilometers
 
 		double tempDeviceLat = deviceLat;
@@ -235,6 +286,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		return convertToMiles(R * c);
 	}
 
+	/**
+	 * Converts a distance in kilometers to miles
+	 *
+	 * @param Distance in kilometers (double)
+	 * @return Distance in miles (double)
+	 */
 	private double convertToMiles(double distance) {
 		// converts kilometers to miles
 		return distance * 0.62137;
@@ -257,6 +314,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		addMapMarker(deviceLat, deviceLng, "Your location");
 	}
 
+	/**
+	 * Resets the camera location to the device's location
+	 *
+	 * @param Mapbox Map (mapboxMap)
+	 */
 	private void resetCameraLocation(@NonNull MapboxMap mapboxMap) {
 		//resets camera to device location:
 		mapboxMap.setCameraPosition(
@@ -267,6 +329,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		);
 	}
 
+	/**
+	 * Adds a map marker onto the map box map based upon the locations latitude and longitude
+	 *
+	 * @param Location's latitude (double)
+	 * @param Location's longitude (double)
+	 * @param Location's name (String)
+	 */
 	private void addMapMarker(double lat, double lng, String name) {
 		// adds a marker to specified latitude and longitude:
 		MarkerOptions tempMarker = new MarkerOptions();
@@ -319,14 +388,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		mapView.onSaveInstanceState(outState);
 	}
 
+	/**
+	 * Class that contains asynchronous functions for threading
+	 */
 	class task extends AsyncTask<URL, Void, ArrayList<Station>> {
-		// creates a thread that runs in background to get
-		// stations location, stores as JSON Array
+
+		/**
+		 * Creates a thread that runs in the background to get all of the station's data, and stores it in a JSON Array
+		 *
+		 * @param URL for server app (URL)
+		 * @return List of nearby train stations (ArrayList<Station>)
+		 */
 		protected ArrayList<Station> doInBackground(URL... urls) {
 			JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
 			return saveJSONToArrayList(JSONStations);
 		}
 
+		/**
+		 * Runs after the asynchronous task has completed. Displays the nearby train station's name and distance onto the text view.
+		 * Draws all required elements onto the map
+		 *
+		 * @param List of nearby train stations (ArrayList<Station>)
+		 */
 		protected void onPostExecute(ArrayList<Station> curStationList) {
 
 			// sorts array of stations by distance ascending:
@@ -341,6 +424,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 	}
 
+	/**
+	 * Uses bubble sort to sort all nearby train stations by distance ascending
+	 *
+	 * @param List of stations to be sorted (ArrayList<Station>)
+	 * @return Sorted list of stations (ArrayList<Station>)
+	 */
 	private ArrayList<Station> bubbleSortArray(ArrayList<Station> curStationList) {
 		ArrayList<Station> tempStations = new ArrayList<>(curStationList);
 
