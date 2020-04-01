@@ -11,6 +11,7 @@ import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -40,29 +41,31 @@ public class MainActivity extends AppCompatActivity {
 
 	Button getStations;
 	ScrollView stationOutput;
+	LinearLayout stationLayout;
 	TextView stationTextView;
 	WebService webService = new WebService();
 
 	Double deviceLat = 0.0;
 	Double deviceLng = 0.0;
-	final String mapboxToken = "pk.eyJ1Ijoiam9uYXRoYW53YXNoZXJlIiwiYSI6ImNrOGg1OHg2dDAxMnUzZXBjM3R2YzM1czAifQ.4VqlIMb76QO2eiQu73fOdw";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-
 		StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 		StrictMode.setThreadPolicy(policy);
 
-		getStations = (Button) this.findViewById(R.id.getStations);
-		stationOutput = (ScrollView) this.findViewById(R.id.stationOutput);
-		stationTextView = (TextView) this.findViewById(R.id.stationTextView);
-
 		this.getLocation();
+
+		final String mapboxToken = "pk.eyJ1Ijoiam9uYXRoYW53YXNoZXJlIiwiYSI6ImNrOGg1dmFmZzAxamMzZXBuYTgzeTVkOWYifQ.YoryZ31-wW4WCy_5orU6MA";
 
 		Mapbox.getInstance(this, mapboxToken);
 		setContentView(R.layout.activity_main);
+
+		getStations = (Button) this.findViewById(R.id.getStations);
+		stationOutput = (ScrollView) this.findViewById(R.id.stationOutput);
+		stationLayout = (LinearLayout) this.findViewById(R.id.stationLayout);
+		stationTextView = (TextView) this.findViewById(R.id.stationTextView);
+
 		mapView = findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
 		mapView.getMapAsync(new OnMapReadyCallback() {
