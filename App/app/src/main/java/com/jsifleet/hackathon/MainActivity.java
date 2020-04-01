@@ -38,7 +38,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, Style.OnStyleLoaded {
 
@@ -89,19 +91,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		switch (v.getId()) {
 			case R.id.getStations:
 				listOfStations.clear();
-				
+
 				String[] FSPermissions = {
 						Manifest.permission.INTERNET
 				};
 
 				if (checkGotPermission(FSPermissions)) {
-					JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
-					listOfStations.addAll(this.saveJSONToArrayList(JSONStations));
+					new task().execute(webService.buildURL(deviceLat, deviceLng));
+
+					for (Station curStation : listOfStations) {
+						Log.e("Message", curStation.getStationName());
+					}
 				} else {
 					Log.e("Message", "Do not have permissions");
 				}
-				this.displayStationsText(listOfStations);
-				this.drawMap();
 				break;
 			case R.id.clearMap:
 				this.deleteAnnotations();
@@ -337,6 +340,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		mapView.onSaveInstanceState(outState);
+	}
+
+	class task extends AsyncTask<URL, Void, ArrayList<Station>> {
+
+		protected ArrayList<Station> doInBackground(URL... urls) {
+			JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
+			return saveJSONToArrayList(JSONStations);
+		}
+
+		protected void onPostExecute(ArrayList<Station> curStations) {
+			listOfStations.addAll(curStations);
+			displayStationsText(listOfStations);
+			drawMap();
+		}
 	}
 
 }
