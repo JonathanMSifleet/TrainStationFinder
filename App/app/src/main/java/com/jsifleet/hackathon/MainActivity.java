@@ -16,7 +16,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.collection.LongSparseArray;
 import androidx.core.app.ActivityCompat;
 
 import com.mapbox.mapboxsdk.Mapbox;
@@ -27,7 +26,6 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
 import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
 
 import org.json.JSONArray;
@@ -58,15 +56,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		// get device's location
 		this.getLocation();
 
+		// token for mapbox
 		final String mapboxToken = "pk.eyJ1Ijoiam9uYXRoYW53YXNoZXJlIiwiYSI6ImNrOGg1dmFmZzAxamMzZXBuYTgzeTVkOWYifQ.YoryZ31-wW4WCy_5orU6MA";
 
 		Mapbox.getInstance(this, mapboxToken);
 		setContentView(R.layout.activity_main);
 
 		getStations = this.findViewById(R.id.getStations);
-
 		stationOutput = this.findViewById(R.id.stationOutput);
 		stationLayout = this.findViewById(R.id.stationLayout);
 		stationTextView = this.findViewById(R.id.stationTextView);
@@ -79,18 +78,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	public void onClick(View v) {
 
 		if (v.getId() == R.id.getStations) {
+			// clears list of stations
 			listOfStations.clear();
-			this.deleteAnnotations();
+			// removes all markers from map box
+			map.clear();
+			// searches for nearby stations
 			this.searchStations();
 		}
 	}
 
 	private void searchStations() {
-		String[] FSPermissions = {
+		String[] Permissions = {
 				Manifest.permission.INTERNET
 		};
 
-		if (checkGotPermission(FSPermissions)) {
+		// checks for permissions
+		if (checkGotPermission(Permissions)) {
+			// run task on thread to get and display local restaurants
 			new task().execute(WebService.buildURL(deviceLat, deviceLng));
 		} else {
 			Log.e("Message", "Do not have permissions");
@@ -98,25 +102,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	}
 
 	private void drawMap() {
+		// add location to map
 		this.addMapMarker(deviceLat, deviceLng, "Your location");
+		// display local stations on map
 		this.displayStationsMapBox(listOfStations);
+		// reset map to current location
 		this.resetCameraLocation(map);
-	}
-
-	private void deleteAnnotations() {
-
-		LongSparseArray<Symbol> annotations = sm.getAnnotations();
-		ArrayList<Symbol> tempAnnotations = new ArrayList<>();
-
-		for (int i = 0; i < annotations.size(); i++) {
-			tempAnnotations.add(annotations.valueAt(i));
-		}
-
-		sm.delete(tempAnnotations);
 	}
 
 	private void displayStationsText(ArrayList<Station> stations) {
 		stationTextView.setText("");
+
+		// display each station's name and and distance to view
 		for (Station curStation : stations) {
 			stationTextView.append("Name: " + curStation.getStationName() + "\n");
 			double tempDistance = curStation.getDistance();
@@ -127,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	}
 
 	private void displayStationsMapBox(ArrayList<Station> stations) {
+		// add a marker for each station onto map
 		for (Station curStation : stations) {
 			this.addMapMarker(curStation.getLat(), curStation.getLng(), curStation.getStationName());
 		}
@@ -134,7 +132,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 	private ArrayList<Station> saveJSONToArrayList(JSONArray stations) {
 		ArrayList<Station> tempListOfStations = new ArrayList<>();
+
 		try {
+			// for each station in the JSON Array
+			// create a station object to store station data
 			for (int i = 0; i < stations.length(); i++) {
 				Station tempStation = new Station();
 
@@ -163,16 +164,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 				Manifest.permission.ACCESS_COARSE_LOCATION
 		};
 
+		// checks for permissions
 		if (checkGotPermission(locationPermissions)) {
 
+			// create a listener for the devices location
 			LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
-
 			lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationListener() {
 				@Override
 				public void onLocationChanged(Location location) {
+					// store device latitude and longitude
 					deviceLat = location.getLatitude();
 					deviceLng = location.getLongitude();
-					//Log.e("Location:", deviceLat.toString() + ", " + deviceLng.toString());
 				}
 
 				@Override
@@ -195,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 	private boolean checkGotPermission(String[] requiredPermissions) {
 
+		// checks for permissions
 		boolean ok = true;
 		for (String requiredPermission : requiredPermissions) {
 			int result = ActivityCompat.checkSelfPermission(this, requiredPermission);
@@ -203,6 +206,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 			}
 		}
 
+		// requests permissions if required
 		if (!ok) {
 			ActivityCompat.requestPermissions(this, requiredPermissions, 1);
 			// last permission must be > 0
@@ -213,6 +217,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	}
 
 	private double calcDistanceHaversine(double deviceLat, double deviceLng, double lat2, double lng2) {
+
+		// calculates distance using Haversine algorithm:
 		final double R = 6372.8; // kilometers
 
 		double tempDeviceLat = deviceLat;
@@ -230,6 +236,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	}
 
 	private double convertToMiles(double distance) {
+		// converts kilometers to miles
 		return distance * 0.62137;
 	}
 
@@ -238,6 +245,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		map = mapboxMap;
 		//required:
 		mapboxMap.setStyle(Style.OUTDOORS, this);
+		//resets camera to device location:
 		this.resetCameraLocation(mapboxMap);
 	}
 
@@ -245,11 +253,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	public void onStyleLoaded(@NonNull Style style) {
 		// symbol manager is responsible for adding map markers:
 		sm = new SymbolManager(mapView, map, style);
-
+		// adds a marker where the device's location is
 		addMapMarker(deviceLat, deviceLng, "Your location");
 	}
 
 	private void resetCameraLocation(@NonNull MapboxMap mapboxMap) {
+		//resets camera to device location:
 		mapboxMap.setCameraPosition(
 				new CameraPosition.Builder()
 						.target(new LatLng(deviceLat, deviceLng))
@@ -259,11 +268,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	}
 
 	private void addMapMarker(double lat, double lng, String name) {
-		// create item:
+		// adds a marker to specified latitude and longitude:
 		MarkerOptions tempMarker = new MarkerOptions();
 		tempMarker.position(new LatLng(lat, lng));
 		tempMarker.title(name);
 
+		// add market to map:
 		map.addMarker(tempMarker);
 	}
 
@@ -310,7 +320,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	}
 
 	class task extends AsyncTask<URL, Void, ArrayList<Station>> {
-
+		// creates a thread that runs in background to get
+		// stations location, stores as JSON Array
 		protected ArrayList<Station> doInBackground(URL... urls) {
 			JSONArray JSONStations = webService.getStationsFromURL(deviceLat, deviceLng);
 			return saveJSONToArrayList(JSONStations);
@@ -318,11 +329,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 		protected void onPostExecute(ArrayList<Station> curStationList) {
 
+			// sorts array of stations by distance ascending:
 			curStationList = bubbleSortArray(curStationList);
 
 			listOfStations.addAll(curStationList);
 
+			// displays station name and distance in view:
 			displayStationsText(listOfStations);
+			// draws required elements to mapbox map
 			drawMap();
 		}
 	}
@@ -330,6 +344,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	private ArrayList<Station> bubbleSortArray(ArrayList<Station> curStationList) {
 		ArrayList<Station> tempStations = new ArrayList<>(curStationList);
 
+		// checks if the stations are displayed in the correct order,
+		// if not arrange by distance ascending
 		boolean hasSwapped = true;
 		while (hasSwapped) {
 			Station temp;
