@@ -1,6 +1,7 @@
 package com.jsifleet.hackathon;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -19,7 +20,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.mapbox.mapboxsdk.plugins.annotation.Symbol;
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolManager;
+import com.mapbox.mapboxsdk.plugins.annotation.SymbolOptions;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
@@ -35,9 +41,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, Style.OnStyleLoaded {
 
 	private MapView mapView;
+	private MapboxMap map;
 
 	Button getStations;
 	ScrollView stationOutput;
@@ -68,17 +75,7 @@ public class MainActivity extends AppCompatActivity {
 
 		mapView = findViewById(R.id.mapView);
 		mapView.onCreate(savedInstanceState);
-		mapView.getMapAsync(new OnMapReadyCallback() {
-			@Override
-			public void onMapReady(@NonNull MapboxMap mapboxMap) {
-				mapboxMap.setStyle(Style.MAPBOX_STREETS, new Style.OnStyleLoaded() {
-					@Override
-					public void onStyleLoaded(@NonNull Style style) {
-						// Map is set up and the style has loaded. Now you can add data or make other map adjustments.
-					}
-				});
-			}
-		});
+		mapView.getMapAsync(this);
 	}
 
 	public void onClick(View v) {
@@ -260,6 +257,36 @@ public class MainActivity extends AppCompatActivity {
 
 	public double convertToMiles(double distance) {
 		return distance * 0.62137;
+	}
+
+	@Override
+	public void onMapReady(@NonNull MapboxMap mapboxMap) {
+		map = mapboxMap;
+		//required:
+		mapboxMap.setStyle(Style.OUTDOORS, this);
+
+		mapboxMap.setCameraPosition(
+				new CameraPosition.Builder()
+						.target(new LatLng(deviceLat, deviceLng))
+						.zoom(8.0)
+						.build()
+		);
+	}
+
+	@Override
+	public void onStyleLoaded(@NonNull Style style) {
+		// symbol manager is responsible for adding map markers:
+		SymbolManager sm = new SymbolManager(mapView, map, style);
+
+		// create an individual map marker:
+		SymbolOptions symbolOptions = new SymbolOptions()
+				.withLatLng(new LatLng(deviceLat, deviceLng))
+				.withIconImage("suitcase-15")
+				.withIconColor("black")
+				.withIconSize(1.0f);
+
+		// display item:
+		Symbol symbol = sm.create(symbolOptions);
 	}
 
 	@Override
