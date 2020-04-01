@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	Double deviceLng = 0.0;
 
 	ArrayList<Station> listOfStations = new ArrayList<>();
+	ArrayList<Symbol> listOfSymbols = new ArrayList<>();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -130,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 		}
 
 		sm.delete(tempAnnotations);
+		listOfSymbols.clear();
 	}
 
 	public void displayStationsText(ArrayList<Station> stations) {
@@ -277,19 +279,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 	}
 
 	public void addSymbol(double lat, double lng, float size) {
-
-		// create an individual map marker:
-		SymbolOptions symbolOptions = new SymbolOptions()
+		// create item:
+		Symbol tempSymbol = sm.create(new SymbolOptions()
 				.withLatLng(new LatLng(lat, lng))
 				.withIconImage("marker-11")
 				.withIconColor("Black")
-				.withIconSize(size);
+				.withIconSize(size)
+		);
 
-		// display item:
-		Symbol symbol = sm.create(symbolOptions);
-
-		sm.addClickListener(smybol -> {
-			Log.e("Click", "click");
+		sm.addClickListener(tempSymbol1 -> {
+			Log.e("Click", "Click");
 		});
 	}
 
